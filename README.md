@@ -44,3 +44,11 @@ Para validar que NGINX está sirviendo la página correctamente al exterior por 
       <!-- Contenido de la página -->
   </body>
 </html>
+```
+## 4. Extra: Servidor Virtual Host con Jekyll
+Para la parte opcional, instalé Jekyll, generé la estructura base en `jekyll-site` y la compilé con `jekyll build`. Copié el HTML generado en la carpeta oculta `_site` al servidor bajo una nueva ruta: `/var/www/html/jekyll`.
+
+Para servir ambas webs simultáneamente por el puerto 80, configuré un Virtual Host basado en nombres. Creé el archivo `jekyll.conf` indicando el `server_name blog.local;`, lo activé mediante un enlace simbólico en `sites-enabled` y recargué NGINX.
+
+Comprobación del Virtual Host inyectando la cabecera Host:
+- `curl -H "Host: blog.local" http://localhost/` -> NGINX lo intercepta y devuelve el HTML del blog de Jekyll correctamente.
