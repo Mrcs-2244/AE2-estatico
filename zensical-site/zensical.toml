@@ -1,18 +1,19 @@
 [project]
-site_url = "https://www.example.com/"
-site_name = "Documentation"
-# site_description = "Your project description"
-# site_author = "Your name"
+site_url = "https://Mrcs-2244.github.io/AE2-estatico/"
+site_name = "Documentaciοn AE2"
+site_description = "Practica AE2 de DPL"
+site_author = "Marcos Rodriguez Hernandez"
 
-# copyright = "Copyright &copy; 2026 Your name"
+# copyright = "Copyright &copy; 2026 Marcos Rodriguez Hernandez"
 
-# repo_url = "https://github.com/user/repo"
-# repo_name = "user/repo"
+repo_url = "https://github.com/Mrcs-2244/AE2-estatico"
+repo_name = "Mrcs-2244/AE2-estatico"
 # edit_uri = "edit/main/docs/"
 
 nav = [
-  { "Get started" = "index.md" },
-  { "Markdown in 5min" = "markdown.md" },
+  { "Despliegue Zensical" = "index.md" },
+  { "Despliegue Jekyll" = "despliegue_de_jekyll.md" },
+  { "Resolución Puertos" = "resoluci_n_de_puertos.md" },
 ]
 
 # extra_css = ["stylesheets/extra.css"]

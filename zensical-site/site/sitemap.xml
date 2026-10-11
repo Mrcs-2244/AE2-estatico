@@ -1,9 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
       <url>
-        <loc>https://www.example.com/</loc>
+        <loc>https://Mrcs-2244.github.io/AE2-estatico/</loc>
       </url>
       <url>
-        <loc>https://www.example.com/markdown/</loc>
+        <loc>https://Mrcs-2244.github.io/AE2-estatico/despliegue_de_jekyll/</loc>
+      </url>
+      <url>
+        <loc>https://Mrcs-2244.github.io/AE2-estatico/resoluci_n_de_puertos/</loc>
       </url>
 </urlset>

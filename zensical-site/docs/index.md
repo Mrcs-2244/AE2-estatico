@@ -1,54 +1,50 @@
-# AE2: Servidor Web Estático con Zensical y NGINX
+# Despliegue de la Documentación con Zensical y NGINX
 
-## 1. Generación de la web con Zensical
-Al estar en una carpeta nueva, utilicé `uvx` para que descargara y ejecutara Zensical. Primero inicialicé la estructura base en la carpeta del proyecto:
+Para la primera parte de la práctica, monté la documentación estática con Zensical. Inicialicé la estructura base con `uvx` para no tener que instalar dependencias globales:
 
-`uvx zensical new .`
-
-Una vez creada la estructura, ejecuté el comando de compilación:
-
-`uvx zensical build`
-
-Esto procesó el proyecto y generó una carpeta llamada `site` que contiene todo el HTML y CSS puro que necesita el servidor.
-
-## 2. Configuración en NGINX
-Aprovechando que la carpeta está montada en el contenedor, copié los archivos generados al directorio de NGINX y le di permisos de lectura:
-
-`docker exec dpl-lab mkdir -p /var/www/html/zensical`
-`docker exec dpl-lab bash -c 'cp -r /home/alumno/dpl/AE2-estatico/zensical-site/site/. /var/www/html/zensical/'`
-`docker exec dpl-lab chmod -R a+rX /var/www/html/zensical`
-
-Después, creé un archivo de configuración (`zensical.conf`) donde indico que la ruta raíz (`root`) de la web es esa misma carpeta. Borré la página por defecto de Ubuntu, enlacé mi archivo y reinicié el servicio:
-
-`docker exec dpl-lab rm -f /etc/nginx/sites-enabled/default`
-`docker exec dpl-lab ln -s /etc/nginx/sites-available/zensical /etc/nginx/sites-enabled/`
-`docker exec dpl-lab nginx -t`
-`docker exec dpl-lab nginx -s reload`
-
-## 3. Comprobación del servidor
-Para validar que NGINX está sirviendo la página correctamente al exterior por el puerto 80, ejecuté dos pruebas con `curl`:
-- `curl -I http://localhost/` -> Comprueba las cabeceras y devuelve un `HTTP/1.1 200 OK`.
-- `curl http://localhost/` -> Devuelve todo el código HTML del index de la web. Aquí una muestra de las primeras líneas:
-
-```html
-<!doctype html>
-<html lang="en" class="no-js">
-  <head>
-      <meta charset="utf-8">
-      <meta name="viewport" content="width=device-width,initial-scale=1">
-      <title>Get started - Documentation</title>
-      <meta name="generator" content="zensical-0.0.68">
-      <!-- ... resto del código HTML ... -->
-  </head>
-  <body>
-      <!-- Contenido de la página -->
-  </body>
-</html>
+```bash
+uvx zensical new .
 ```
-## 4. Extra: Servidor Virtual Host con Jekyll
-Para la parte opcional, instalé Jekyll, generé la estructura base en `jekyll-site` y la compilé con `jekyll build`. Copié el HTML generado en la carpeta oculta `_site` al servidor bajo una nueva ruta: `/var/www/html/jekyll`.
 
-Para servir ambas webs simultáneamente por el puerto 80, configuré un Virtual Host basado en nombres. Creé el archivo `jekyll.conf` indicando el `server_name blog.local;`, lo activé mediante un enlace simbólico en `sites-enabled` y recargué NGINX.
+Una vez editados los archivos de la documentación, lancé la compilación del proyecto:
 
-Comprobación del Virtual Host inyectando la cabecera Host:
-- `curl -H "Host: blog.local" http://localhost/` -> NGINX lo intercepta y devuelve el HTML del blog de Jekyll correctamente.
+```bash
+uvx zensical build
+```
+
+Esto procesó el proyecto y generó una carpeta (normalmente `site` o `build`) con todo el HTML y CSS estático.
+
+### Integración con NGINX
+
+Aprovechando que el contenedor de NGINX ya estaba corriendo, creé la carpeta destino en el servidor, le pasé los archivos generados y me aseguré de darle permisos de lectura para evitar errores 403 (Forbidden):
+
+```bash
+docker exec dpl-lab-web mkdir -p /var/www/html/zensical
+docker cp zensical-site/build/. dpl-lab-web:/var/www/html/zensical/
+docker exec dpl-lab-web chmod -R a+rX /var/www/html/zensical
+```
+
+Para que NGINX supiera qué hacer con esto, creé un archivo de configuración (`zensical.conf`) apuntando el `root` a `/var/www/html/zensical`. Después, borré la página por defecto de Ubuntu, creé el enlace simbólico para activar mi sitio y verifiqué la sintaxis antes de reiniciar el servicio:
+
+```bash
+docker exec dpl-lab-web rm -f /etc/nginx/sites-enabled/default
+docker exec dpl-lab-web ln -s /etc/nginx/sites-available/zensical /etc/nginx/sites-enabled/
+docker exec dpl-lab-web nginx -t
+docker exec dpl-lab-web nginx -s reload
+```
+
+### Comprobación del servidor
+
+Para validar que NGINX está sirviendo la página correctamente al exterior, ejecuté dos pruebas rápidas con `curl` (apuntando al puerto 8080 que es el que tengo mapeado al host):
+
+1. **Test de cabeceras:**
+   ```bash
+   curl -I http://localhost:8080/
+   ```
+   *Resultado:* Me devolvió un `HTTP/1.1 200 OK`, confirmando que el servidor responde sin errores.
+
+2. **Test de contenido:**
+   ```bash
+   curl http://localhost:8080/
+   ```
+   *Resultado:* Devolvió todo el código HTML de la portada de Zensical por la terminal, confirmando que la ruta del `root` es correcta.
