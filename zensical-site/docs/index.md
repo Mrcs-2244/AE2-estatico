@@ -1,173 +1,54 @@
----
-icon: lucide/rocket
----
+# AE2: Servidor Web Estático con Zensical y NGINX
 
-# Get started
+## 1. Generación de la web con Zensical
+Al estar en una carpeta nueva, utilicé `uvx` para que descargara y ejecutara Zensical. Primero inicialicé la estructura base en la carpeta del proyecto:
 
-For full documentation visit [zensical.org](https://zensical.org/docs/).
+`uvx zensical new .`
 
-## Commands
+Una vez creada la estructura, ejecuté el comando de compilación:
 
-* [`zensical new`][new] - Create a new project
-* [`zensical serve`][serve] - Start local web server
-* [`zensical build`][build] - Build your site
+`uvx zensical build`
 
-  [new]: https://zensical.org/docs/usage/new/
-  [serve]: https://zensical.org/docs/usage/preview/
-  [build]: https://zensical.org/docs/usage/build/
+Esto procesó el proyecto y generó una carpeta llamada `site` que contiene todo el HTML y CSS puro que necesita el servidor.
 
-## Examples
+## 2. Configuración en NGINX
+Aprovechando que la carpeta está montada en el contenedor, copié los archivos generados al directorio de NGINX y le di permisos de lectura:
 
-### Admonitions
+`docker exec dpl-lab mkdir -p /var/www/html/zensical`
+`docker exec dpl-lab bash -c 'cp -r /home/alumno/dpl/AE2-estatico/zensical-site/site/. /var/www/html/zensical/'`
+`docker exec dpl-lab chmod -R a+rX /var/www/html/zensical`
 
-> Go to [documentation](https://zensical.org/docs/authoring/admonitions/)
+Después, creé un archivo de configuración (`zensical.conf`) donde indico que la ruta raíz (`root`) de la web es esa misma carpeta. Borré la página por defecto de Ubuntu, enlacé mi archivo y reinicié el servicio:
 
-!!! note
+`docker exec dpl-lab rm -f /etc/nginx/sites-enabled/default`
+`docker exec dpl-lab ln -s /etc/nginx/sites-available/zensical /etc/nginx/sites-enabled/`
+`docker exec dpl-lab nginx -t`
+`docker exec dpl-lab nginx -s reload`
 
-    This is a **note** admonition. Use it to provide helpful information.
+## 3. Comprobación del servidor
+Para validar que NGINX está sirviendo la página correctamente al exterior por el puerto 80, ejecuté dos pruebas con `curl`:
+- `curl -I http://localhost/` -> Comprueba las cabeceras y devuelve un `HTTP/1.1 200 OK`.
+- `curl http://localhost/` -> Devuelve todo el código HTML del index de la web. Aquí una muestra de las primeras líneas:
 
-!!! warning
-
-    This is a **warning** admonition. Be careful!
-
-### Details
-
-> Go to [documentation](https://zensical.org/docs/authoring/admonitions/#collapsible-blocks)
-
-??? info "Click to expand for more info"
-
-    This content is hidden until you click to expand it.
-    Great for FAQs or long explanations.
-
-## Code Blocks
-
-> Go to [documentation](https://zensical.org/docs/authoring/code-blocks/)
-
-``` python hl_lines="2" title="Code blocks"
-def greet(name):
-    print(f"Hello, {name}!") # (1)!
-
-greet("Python")
+```html
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      <title>Get started - Documentation</title>
+      <meta name="generator" content="zensical-0.0.68">
+      <!-- ... resto del código HTML ... -->
+  </head>
+  <body>
+      <!-- Contenido de la página -->
+  </body>
+</html>
 ```
+## 4. Extra: Servidor Virtual Host con Jekyll
+Para la parte opcional, instalé Jekyll, generé la estructura base en `jekyll-site` y la compilé con `jekyll build`. Copié el HTML generado en la carpeta oculta `_site` al servidor bajo una nueva ruta: `/var/www/html/jekyll`.
 
-1.  > Go to [documentation](https://zensical.org/docs/authoring/code-blocks/#code-annotations)
+Para servir ambas webs simultáneamente por el puerto 80, configuré un Virtual Host basado en nombres. Creé el archivo `jekyll.conf` indicando el `server_name blog.local;`, lo activé mediante un enlace simbólico en `sites-enabled` y recargué NGINX.
 
-    Code annotations allow to attach notes to lines of code.
-
-Code can also be highlighted inline: `#!python print("Hello, Python!")`.
-
-## Content tabs
-
-> Go to [documentation](https://zensical.org/docs/authoring/content-tabs/)
-
-=== "Python"
-
-    ``` python
-    print("Hello from Python!")
-    ```
-
-=== "Rust"
-
-    ``` rs
-    println!("Hello from Rust!");
-    ```
-
-## Diagrams
-
-> Go to [documentation](https://zensical.org/docs/authoring/diagrams/)
-
-``` mermaid
-graph LR
-  A[Start] --> B{Error?};
-  B -->|Yes| C[Hmm...];
-  C --> D[Debug];
-  D --> B;
-  B ---->|No| E[Yay!];
-```
-
-## Footnotes
-
-> Go to [documentation](https://zensical.org/docs/authoring/footnotes/)
-
-Here's a sentence with a footnote.[^1]
-
-Hover it, to see a tooltip.
-
-[^1]: This is the footnote.
-
-
-## Formatting
-
-> Go to [documentation](https://zensical.org/docs/authoring/formatting/)
-
-- ==This was marked (highlight)==
-- ^^This was inserted (underline)^^
-- ~~This was deleted (strikethrough)~~
-- H~2~O
-- A^T^A
-- ++ctrl+alt+del++
-
-## Icons, Emojis
-
-> Go to [documentation](https://zensical.org/docs/authoring/icons-emojis/)
-
-* :sparkles: `:sparkles:`
-* :rocket: `:rocket:`
-* :tada: `:tada:`
-* :memo: `:memo:`
-* :eyes: `:eyes:`
-
-## Maths
-
-> Go to [documentation](https://zensical.org/docs/authoring/math/)
-
-$$
-\cos x=\sum_{k=0}^{\infty}\frac{(-1)^k}{(2k)!}x^{2k}
-$$
-
-!!! warning "Needs configuration"
-    Note that MathJax is included via a `script` tag on this page and is not
-    configured in the generated default configuration to avoid including it
-    in a pages that do not need it. See the documentation for details on how
-    to configure it on all your pages if they are more Maths-heavy than these
-    simple starter pages.
-
-<script id="MathJax-script" src="https://unpkg.com/mathjax@3/es5/tex-mml-chtml.js"></script>
-<script>
-  window.MathJax = {
-    tex: {
-      inlineMath: [["\\(", "\\)"]],
-      displayMath: [["\\[", "\\]"]],
-      processEscapes: true,
-      processEnvironments: true
-    },
-    options: {
-      ignoreHtmlClass: ".*|",
-      processHtmlClass: "arithmatex"
-    }
-  };
-
-  document$.subscribe(() => {
-    MathJax.startup.output.clearCache()
-    MathJax.typesetClear()
-    MathJax.texReset()
-    MathJax.typesetPromise()
-  })
-</script>
-
-## Task Lists
-
-> Go to [documentation](https://zensical.org/docs/authoring/lists/#using-task-lists)
-
-* [x] Install Zensical
-* [x] Configure `zensical.toml`
-* [x] Write amazing documentation
-* [ ] Deploy anywhere
-
-## Tooltips
-
-> Go to [documentation](https://zensical.org/docs/authoring/tooltips/)
-
-[Hover me][example]
-
-  [example]: https://example.com "I'm a tooltip!"
+Comprobación del Virtual Host inyectando la cabecera Host:
+- `curl -H "Host: blog.local" http://localhost/` -> NGINX lo intercepta y devuelve el HTML del blog de Jekyll correctamente.
